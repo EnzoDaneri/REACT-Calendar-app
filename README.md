@@ -1,4 +1,3 @@
-
 ########------------REACT----------###################
 
 https://mern-app-enzo.herokuapp.com/ (App completa realizada)
@@ -10,6 +9,12 @@ React de cero a experto. Fernando Herrera(Udemy)
 
 *El contenido de jsx se debe colocar dentro de un contenedor, por ej: un div. Pero es mejor evitar llenar de divs la aplicación. Para eso se usa <Fragment><Fragment/>(También tiene la forma corta que es: <></>.
 --------------------------------------------------------------------
+export const Home = ({ isAuthenticated,
+                       component, 
+                       ...rest   }) => {}
+Cuando los 3 puntos se usan en los argumentos de una función, se llama operador rest. Y cuando se usan en otra parte se llaman spread.
+
+--------------------------------------------------------------------
 SNIPETS:
 
 rafcp : Crea un functional component con proptypes.
@@ -18,11 +23,120 @@ rafce : crea functional component con exportación por defecto.
 
 impt : importar proptypes.
 
+imr : importar React
+--------------------------------------------------------------------
+
+####### 'HOOKS': Son funciones que vienen incorporadas en React, aunque pueden también crearse custom hooks.
+
+ -' useState ' const [ value, setValue ] = useState(defaultValue);
+   Retorna un arreglo.
+
+ -' useEffect ' ejecuta una instrucción cada vez que se monta el componente, y cada vez que cambie la dependencia que indique en el arreglo de dependencias para escuchar. 
+Opcionalmente, en el medio puede llevar una función que limpia alguna otra acción.
+
+ -' useMemo '
+const memoProcesoPesado = useMemo(() => procesoPesado(counter), [ counter ]);
+ Memoriza ese resultado y la dependencia le dice cuando tiene que volver a memorizar ese resultado
+
+- ' useCallback ' Tiene 2 casos principales de uso: 1- para mandar una función a un componente hijo. Memoriza una función y solamente la crea nuevamente cuando renderiza si la dependencia especificada cambia.
+
+(También uso el React.Memo en el hijo)
+const increment = useCallback(
+      () => {
+        setCounter( c => c + 1 );
+
+      },
+      [setCounter],
+  )
+
+2- El otro caso  de uso es cuando tengo un useEffect que tiene una dependencia y esa dependencia es una función.
+
+
+- ' useReducer ' Hace lo mismo que el useState, pero el useReducer se utiliza cuando hay muchas acciones que pueden modificar el state de la aplicación. Para un estado simple conviene useState, pero para algo más complejo se debería usar useReducer.
+
+'const [state, dispatch] = useReducer(reducer, initialState, init) '
+El tercer argumento, que es la función init, es opcional y me puede servir para ayudar a computar el estado inicial de una manera más rápida, y que no se tenga que estar redibujando. Por ejemplo, puede usarse para grabar también en local storage mediante un useEffect.(CLASE 128)
+
+const init = () => {
+  return JSON.parse( localStorage.getItem('todos')) || [];
+}
+
+
+export const TodoApp = () => {
+
+  const [ todos, dispatch ] = useReducer( todoReducer, [], init);
+
+   const [{ description }, handleInputChange, reset ] = useForm({
+       description: '',
+   });
+
+
+   useEffect(() => {
+     localStorage.setItem('todos', JSON.stringify( todos ));
+   }, [todos]);
+
+
+La idea de un reducer es tener controladas en un solo lugar todas las acciones que pueden modificar el estado de la aplicación.
+*REDUCER: Un reducer es una función común y corriente.
+-No puede ser asíncrona.
+-Debe ser una función pura(todo lo que realice debe resolverse de manera interna).
+Función Pura:
+.No debe tener efectos secundarios(no llamar a otras funciones y resolver todo internamente)
+.No debe realizar tareas asíncronas.
+.Debe retornar siempre un nuevo estado.
+.No debe llamar localStorage o sessionStorage.
+.No debe requerir más que una acción que puede tener un argumento.
+
+-Debe retornar un nuevo estado(no muta el estado anterior, sino que regresa uno nuevo).
+-Usualmente recibe sólo dos argumentos: el valor inicial y la acción a ejecutar.
+
+La acción es un objeto. El estándar es que se use la palabra type para indicar qué tipo de acción es (para agregar, borrar, etc)
+También por convención se usa la palabra payload para indicar el estado que quiero modificar.
+
+const action = {
+    type: 'agregar',
+    payload: newTodo
+}
+
+
+*El state se muestra en la vista, la vista dispara la acción, la acción es recibida por el reducer, y el reducer devuelve un nuevo state que será mostrado por la vista nuevamente.
+Toda la información fluye en una sola vía y de manera controlada.
+
+
+' useContext ' Permite manejar información entre componentes sin pasar props entre padres, hijos etc. Centraliza la información en un lugar que sea accesible para que pueda usarla cualquier componente.
+Ese lugar es el Context, el cuál es un contenedor de información que se encuentra en un nivel superior de la app y que permite a los hijos acceder a sus métodos y poder ejecutarlos.
+
+*CreateContext() Crea un high order component
+Ej: export const UserContext = createContext(null);
+Luego lo puedo usar así:   
+             import { UserContext } from './UserContext'
+
+export const MainApp = () => {
+
+   const user = {
+       id: 1234,
+       name: 'Fernando',
+       email: 'fernando@gmail.com'
+   }
+
+
+    return (
+            <UserContext.Provider value={ user } >
+              <AppRouter/>
+            </UserContext.Provider>
+        
+            
+    )
+}
+
+Entonces todos los hijos del AppRouter van a tener acceso a esa información del context.
 --------------------------------------------------------------------
 
 TESTING
-PRUEBAS UNITARIAS: de un componente aislado.
-PRUEBAS DE INTEGRACIÓN: de componentes en iteracción con otros en conjunto.
+PRUEBAS UNITARIAS: de un componente o una funcionalidad aislada.
+PRUEBAS DE INTEGRACIÓN: de componentes o funcionalidades en interacción con otros en conjunto.
+
+'test suite': cada uno de los archivos de prueba.
 
 Preparación del ambiente:
 1-ARRANGE (arreglar) Inicializamos variables, hacemos importaciones.
@@ -66,7 +180,7 @@ CONFIGURAR ENZYME:
   
 *Para probar 'hooks' se usa una librería: https://react-hooks-testing-library.com/
 
-npm install --save-dev @testing-library/react-hooks
+' npm install --save-dev @testing-library/react-hooks '
 
 
 *Para 'Redux' se usa redux-mock-store (permite crear un store)
@@ -81,6 +195,26 @@ const mockStore = configureStore(middlewares)
 
 
 https://www.npmjs.com/package/redux-mock-store
+
+
+'shalow ': Prueba el componente aislado y de manera más superficial.
+' mount ': Prueba el componente en su contexto general, con sus hijos, etc. Es para higher order components.
+
+
+
+*  ' MemoryRouter ' Sirve para probar mis rutas. Se envuelven en ese componente y funciona como un Router.(Clase N° 199). 
+    const wrapper = mount(
+            <MemoryRouter>
+             <PrivateRoute 
+                isAuthenticated={ true }
+                component={ () => <span>Listo!</span> }
+                { ...props }
+             />
+             </MemoryRouter> 
+             );
+
+
+    });
 
 --------------------------------------------------------------------
 * HELPERS: son funciones que hacen un cierto trabajo en específico(por ejemplo un fetch a API)
@@ -103,8 +237,59 @@ npm install react-router-dom
 
 https://reactrouter.com/web/api/NavLink
 
+ Link
+*NavLink: Permite saber en qué ruta me encuentro.(La diferencia entre Link y NavLink es solamente que en NavLink se puede activar una clase de manera condicional si ese link está activo)
+
+            <NavLink exact activeClassName="active" to="/login" className="nav-link" >Login</NavLink>
+
+
 
 -- history.replace('/'); navega a otra página, sin conservar la anterior en el historial de navegaciones.
+
+--history.push('/') navega a otra página pero conservando la anterior en el historial de navegaciones.
+
+--  history.goBack(); regresa a la página anterior.
+    Además, con esta validación, no me saca de mi sitio en caso de que no tenga páginas para retroceder, sino que me redirecciona al home.
+ const handleReturn = () => {
+        if( history.length <= 2) {
+            history.push('/');
+        } else {
+            history.goBack();
+        }
+     
+    }
+
+
+*' useParams ' Es un hook que tiene React-Router para extraer los parámetros que vienen por el url.
+
+const params = useParams();
+
+*' useLocation ' Es un hook de react-router para obtener la locación
+  const location = useLocation(); (Clase N° 181).
+
+# ' npm install query-string ' Librería para trabajar con query string, porque react no lo trae todavía.
+https://www.npmjs.com/package/query-string.
+
+*' useHIstory ' Es un hook que viene en React-Router-Dom para acceder al history que ya viene en el context.( Clase N° 190 ).
+const history = useHistory()
+
+
+*En PrivateRoute: localStorage.setItem('lastPath', rest.location.pathname); Para grabar la última ruta en la que estuvo el usuario y que pueda entrar ahí directamente cuando haga login de nuevo.(Clase N°193).
+Luego en Login:  const handleLogin = () => {
+
+      const lastPath = localStorage.getItem('lastPath') || '/';
+ 
+     dispatch({
+       type: types.login,
+       payload: {
+         name: 'Fernando'
+       }
+     });
+
+     history.replace( lastPath );
+        
+    }
+
 
 --------------------------------------------------------------------
 
@@ -192,76 +377,3 @@ NODE jS
 VER LOGS DE HEROKU
 ' heroku logs -n 1000 --tail ' (para ver mensajes en consola)
 
-
-
-
-
-------------------------------------------------------------
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
